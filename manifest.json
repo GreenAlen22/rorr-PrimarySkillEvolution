@@ -1,0 +1,10 @@
+{
+	"name": "PrimarySkillEvolution",
+	"version_number": "0.1.0",
+	"website_url": "",
+	"description": "Reworks every survivor's primary attack.",
+	"dependencies": [
+		"LuaENVY-ENVY-0.1.0",
+		"ReturnsAPI-ReturnsAPI-0.1.58"
+	]
+}
