@@ -32,13 +32,41 @@ Rewards.define("secondWind", function(actor)
 end)
 
 RecalculateStats.add(function(actor, api)
-    if actor:buff_count(ST.breathless) > 0 then
-        api.attack_speed_mult(C.breathless.attack_speed)
-        api.damage_mult(C.breathless.damage)
-    end
     if actor:buff_count(ST.second_wind) > 0 then
         api.armor_add(C.second_wind.armor)
     end
+end)
+
+local function breathe(actor, attack_info)
+    if actor:buff_count(ST.breathless) <= 0 then return end
+    local damage = tonumber(attack_info.damage)
+    if not damage then error("stamina: a strike's attack_info has no damage") end
+    attack_info.damage = math.ceil(damage * C.breathless.damage)
+end
+
+Strikes.on_attack(function(player, kind, attack_info)
+    if kind == "strike" then breathe(player, attack_info) end
+end)
+
+local PICK_COLLISION = "gml_Object_oMinerPick_Collision_pActorCollisionBase"
+local EXEMPT = "notStrike"
+local thrown_pick = false
+
+function ST.exempt(inst)
+    Instance.get_data(inst, EXEMPT, NS).on = true
+end
+
+Hook.add_pre(PICK_COLLISION, function(self)
+    thrown_pick = Instance.get_data(self, EXEMPT, NS).on ~= true
+end)
+Hook.add_post(PICK_COLLISION, function()
+    thrown_pick = false
+end)
+
+Hook.add_post(gm.constants.fire_direct, function(self, other, result, args)
+    if not thrown_pick or not Net.host then return end
+    if not self or self.object_index ~= gm.constants.oP then return end
+    breathe(self, result.value)
 end)
 
 local function data_of(player, entry)

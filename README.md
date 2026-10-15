@@ -36,7 +36,7 @@ Artificer (Flame Chakrams) - the chakram flies to the cursor. Action sets a ring
 ## Melee
 Acrid, HAN-D, Miner, Mercenary, Loader, Drifter and the melee alternatives of Bandit, Sniper and CHEF.
 
-Stamina - every strike spends it. Empty stamina makes you Breathless: -30% attack speed and damage. When it runs low, hit the window with Action to refill it and get Second Wind: +20 armor.  
+Stamina - every strike spends it. Empty stamina makes you Breathless: your primary deals half damage. When it runs low, hit the window with Action to refill it and get Second Wind: +20 armor.  
 Finisher - hits fill a bar. When it is full, an explosion knocks up and stuns enemies around you, and you get Rage: +35% damage and 10% lifesteal for 8 seconds.  
 Signatures - every hero has its own finisher effect. Miner rains pickaxes, Mercenary stops time and cuts the whole screen, Loader throws everyone sky-high, CHEF's kills drop snacks, and more.  
 Series - a style rank from D to SSS. Hit hard, crit, kill in streaks and mix your attacks.  

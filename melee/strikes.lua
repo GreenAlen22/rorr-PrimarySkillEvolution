@@ -97,6 +97,12 @@ end
 
 local own_kind = nil
 
+local on_attack = {}
+
+function S.on_attack(fn)
+    on_attack[#on_attack + 1] = fn
+end
+
 for _, attack in ipairs(ATTACKS) do
     Hook.add_post(attack.fire, function(self, other, result, args)
         if not self or self.object_index ~= gm.constants.oP or not Util.bool(self.is_local) then return end
@@ -108,7 +114,9 @@ for _, attack in ipairs(ATTACKS) do
             kind = (attack.object == EXPLOSION and strike and self.id == strike.player
                 and Global._current_frame == strike.frame) and "strike" or "skill"
         end
-        claim(attack.object, self, kind, args[2].value, args[3].value)
+        local inst = claim(attack.object, self, kind, args[2].value, args[3].value)
+        if not inst then return end
+        for _, fn in ipairs(on_attack) do fn(self, kind, inst.attack_info) end
     end)
 end
 

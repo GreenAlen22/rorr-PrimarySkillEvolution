@@ -12,7 +12,7 @@ PSE.Config = {
 
     gunners = {
         commandoZ  = { magazine = 16, reload = 1.2 * FPS },
-        banditZ    = { magazine = 6,  reload = 1.3 * FPS },
+        banditZ    = { magazine = 8,  reload = 1.3 * FPS },
         enforcerZ  = { magazine = 5,  reload = 1.8 * FPS },
         pilotZ     = { magazine = 9,  reload = 1.4 * FPS },
         pilotZ2    = { magazine = 30, reload = 1.6 * FPS },
@@ -77,8 +77,7 @@ PSE.Config = {
         overflow = 1.5,
 
         breathless = {
-            attack_speed = 0.7,
-            damage       = 0.7,
+            damage       = 0.5,
             duration     = 30 * FPS,
         },
 
@@ -104,7 +103,7 @@ PSE.Config = {
 
         signatures = {
             bandit = { stacks = 2, duration = 15 * FPS },
-            hand = { drones = 2 },
+            hand = { drones = 6 },
             miner = { picks = 10, width = 240, height = 200, damage = 2 },
             sniper = { marks = 6, reach = 600, duration = 8 * FPS },
             acrid = { reach = 600 },
@@ -114,8 +113,8 @@ PSE.Config = {
                 slash_every  = 6,
                 shatter      = 66,
                 length       = 110,
-                slash_damage = 1.5,
-                final_damage = 5,
+                slash_damage = 0.75,
+                final_damage = 3,
                 stun         = 2,
             },
             loader = { damage = 10, knockup = 22, width = 480, height = 200, stun = 1 },
@@ -127,7 +126,7 @@ PSE.Config = {
             distance = 150,
             frames   = 12,
             cooldown = 1.5 * FPS,
-            guard    = 1 * FPS,
+            guard    = 20,
         },
 
         launcher = {
