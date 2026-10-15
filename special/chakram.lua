@@ -30,31 +30,47 @@ function K.is_chakrams(player)
     return player:get_default_skill(Skill.Slot.PRIMARY).skill_id == CHAKRAMS
 end
 
-local function point(artificer)
-    local angle, distance = Cursor.target(artificer)
-    if not angle then return nil end
+local ROW = 18
 
-    local side = artificer.image_xscale >= 0 and 0 or 180
-    angle    = side + Aim.turn(CONE, side, angle)
-    distance = math.max(C.min_distance, math.min(C.max_distance, distance))
-    return artificer.x + gm.lengthdir_x(distance, angle),
-        artificer.y + gm.lengthdir_y(distance, angle),
-        angle
+local function place(chakram, throw, reach)
+    local distance = math.max(C.min_distance, math.min(reach, throw.distance))
+    chakram.tX = throw.x + gm.lengthdir_x(distance, throw.angle)
+    chakram.tY = throw.y + gm.lengthdir_y(distance, throw.angle) + throw.row * ROW
+    chakram.direction = throw.angle
+    throw.tX = chakram.tX
 end
 
 Callback.add(ActorState.wrap(THROW).on_step, function(actor, _)
     local chakrams = V.claim(CHAKRAM, actor, actor.x, actor.y, CLAIM_RADIUS)
     if #chakrams == 0 then return end
 
-    local x, y, angle = point(actor)
-    if not x then return end
+    local angle, distance = Cursor.target(actor)
+    if not angle then return end
+    local side = actor.image_xscale >= 0 and 0 or 180
+    angle = side + Aim.turn(CONE, side, angle)
 
     for i, chakram in ipairs(chakrams) do
-        chakram.tX = x
-        chakram.tY = y + (i - 1) * 18
-        chakram.direction = angle
+        local throw = Instance.get_data(chakram, "throw", NS)
+        throw.x, throw.y, throw.angle, throw.distance, throw.row = actor.x, actor.y, angle, distance, i - 1
+        place(chakram, throw, C.max_distance)
     end
 end)
+
+local AFTER_SKILLS = -100
+
+if mods["GreenAlen22-SkillPlusPlus"] ~= nil then
+    Hook.add_pre("gml_Object_oArtiChakram_Step_2", AFTER_SKILLS, function(self)
+        local throw = Instance.get_data(self, "throw", NS)
+        if not throw.tX or throw.settled then return end
+        throw.settled = true
+
+        local shift = throw.tX - self.sX
+        if math.abs(shift) < 1 then return end
+
+        local factor = (self.tX - self.sX) / shift
+        place(self, throw, C.max_distance * factor)
+    end)
+end
 
 Callback.add(Callback.ON_PLAYER_STEP, function(player)
     if Util.bool(player.is_local) and K.is_chakrams(player) then Cursor.share(player) end

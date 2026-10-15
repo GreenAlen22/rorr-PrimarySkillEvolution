@@ -88,4 +88,37 @@ N.signature:set_serializers(
     end
 )
 
+N.rules = Packet.new("rules")
+N.rules:set_serializers(
+    function(buffer, mask)
+        buffer:write_byte(mask)
+    end,
+    function(buffer, _)
+        local mask = buffer:read_byte()
+        if Net.host then return end
+        PSE.Prefs.receive(mask)
+    end
+)
+
+N.rules_ask = Packet.new("rulesAsk")
+N.rules_ask:set_serializers(
+    function() end,
+    function()
+        if not Net.host then return end
+        PSE.Prefs.broadcast()
+    end
+)
+
+N.pick_hit = Packet.new("pickHit")
+N.pick_hit:set_serializers(
+    function(buffer, player)
+        buffer:write_instance(player)
+    end,
+    function(buffer, _)
+        local player = buffer:read_instance()
+        if Net.host then return end
+        PSE.Strikes.receive_thrown_hit(player)
+    end
+)
+
 PSE.Net = N

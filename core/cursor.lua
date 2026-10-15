@@ -2,13 +2,14 @@
 
 PSE = PSE or {}
 
-local C  = PSE.Config.cursor_share
-local NS = PSE.Config.namespace
+local C     = PSE.Config.cursor_share
+local NS    = PSE.Config.namespace
+local Prefs = PSE.Prefs
 
 local CU = {}
 
 function CU.enabled(player)
-    return Util.bool(gm.player_util_get_use_mouse_aim(player.value))
+    return Prefs.rule("aim") and Util.bool(gm.player_util_get_use_mouse_aim(player.value))
 end
 
 function CU.local_angle(x, y)

@@ -26,7 +26,8 @@ Console.new{
     {
         "Prints whether Primary Skill Evolution loaded in full, this machine's "
         .."network role, which language table answered, whether the sprites "
-        .."loaded and, in a run, whether mouse aim is on.",
+        .."loaded, the rules in force and whose they are, the HUD settings "
+        .."and, in a run, whether shots aim at the cursor.",
     },
     function(args)
         local boot = PSE.Boot
@@ -43,9 +44,21 @@ Console.new{
         local failed = PSE.Assets.failed
         say("sprites: "..(#failed == 0 and "all loaded" or "FAILED "..table.concat(failed, "; ")))
 
+        local Prefs = PSE.Prefs
+        local rules = {}
+        for _, name in ipairs(Prefs.RULES) do
+            rules[#rules + 1] = name.." "..(Prefs.rule(name) and "on" or "off")
+        end
+        say("rules ("..Prefs.source().."): "..table.concat(rules, ", "))
+        say(string.format("hud: preset %s (x %d%%, y %d%%), series %s, screen fx %s, bar at cursor %s",
+            Prefs.hud("preset"),
+            math.floor(Prefs.hud("x") * 100 + 0.5), math.floor(Prefs.hud("y") * 100 + 0.5),
+            Prefs.hud("series") and "on" or "off", Prefs.hud("screenFx") and "on" or "off",
+            Prefs.hud("barAtCursor") and "on" or "off"))
+
         local p = Player.get_local()
         if Instance.exists(p) and p.object_index == gm.constants.oP then
-            say("mouse aim: "..(PSE.Aim.enabled(p) and "on" or "off"))
+            say("aim at cursor: "..(PSE.Aim.enabled(p) and "on" or "off"))
         end
     end
 }
@@ -60,20 +73,29 @@ Console.new{
         local p = local_player()
         if not p then return end
 
-        local data = PSE.Magazine.get(p)
-        if not data then
-            say("no magazine: not a gunner, or a gunner with the vanilla reload")
+        if PSE.Sniper.holds(p) then
+            local left = PSE.Sniper.cooldown(p)
+            say("Snipe: vanilla reload, Perfect Reload "
+                ..(left > 0 and string.format("pays again in %.1f s", left / PSE.Config.fps) or "ready"))
             return
         end
 
-        local magazine = data.entry.tuning.magazine
+        local data = PSE.Magazine.get(p)
+        if not data then
+            say("no magazine: not a gunner, a gunner with the vanilla reload, or the magazine rule is off")
+            return
+        end
+
+        local magazine = PSE.Magazine.size(p, data)
         if args[1] ~= nil then
             data.ammo = math.max(0, math.min(magazine, math.floor(tonumber(args[1]) or 0)))
             if data.ammo == 0 then PSE.Reload.start(p, data) end
         end
 
         local reload = data.reload
-        say(string.format("%s: %d/%d, %s, window %s", data.entry.name, data.ammo, magazine,
+        say(string.format("%s: %d/%d (Skills++ level %d, window %d%%), %s, window %s",
+            data.entry.name, data.ammo, magazine, PSE.Levels.of(p, data.entry.skill),
+            math.floor(PSE.Reload.width(p, data) * 100 + 0.5),
             reload and string.format("reloading %d%%%s%s", math.floor(reload.progress * 100),
                 reload.window and "" or " (no window)",
                 reload.missed and ", missed" or "")
@@ -145,11 +167,13 @@ Console.new{
         else
             window = "ready"
         end
-        say(string.format("%s (%s): stamina %.1f/%d%s, window %s, finisher %d/%d%s, series %s",
-            entry.name, entry.hero, stamina.value, entry.strikes,
+        say(string.format("%s (%s, Skills++ level %d): stamina %.1f/%.1f%s, window %s, finisher %d/%d%s (rage %.1f s), series %s",
+            entry.name, entry.hero, PSE.Levels.of(p, entry.skill),
+            stamina.value, PSE.Stamina.capacity(p, entry),
             stamina.breathless and " (breathless)" or "",
             window, PSE.Finisher.data(p).charge, PSE.Config.melee.finisher.strikes,
             PSE.Finisher.raging(p) and ", rage" or "",
+            PSE.Rage.duration(p) / PSE.Config.fps,
             PSE.Series.LETTERS[PSE.Series.rank(p)] or "-"))
 
         local c = PSE.Strikes.counters

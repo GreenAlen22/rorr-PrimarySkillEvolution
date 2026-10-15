@@ -1,6 +1,6 @@
 {
 	"name": "PrimarySkillEvolution",
-	"version_number": "0.1.1",
+	"version_number": "0.2.0",
 	"website_url": "",
 	"description": "Reworks every survivor's primary attack.",
 	"dependencies": [

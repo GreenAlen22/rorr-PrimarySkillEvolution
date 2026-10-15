@@ -43,7 +43,7 @@ Hook.add_post("gml_Object_oP_Draw_73", function(self, other)
     if not Util.bool(self.is_local) then return end
 
     local attack, charge = Charge.drawing(self)
-    if not attack then return end
+    if not attack or not PSE.Prefs.rule("chargeWindow") then return end
 
     if attack.name == "huntressZ2" then
         huntress(self, attack, charge)

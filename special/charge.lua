@@ -6,6 +6,7 @@ local C       = PSE.Config
 local V       = PSE.Vanilla
 local Assets  = PSE.Assets
 local Rewards = PSE.Rewards
+local Prefs   = PSE.Prefs
 
 local FULL = 150
 
@@ -60,7 +61,7 @@ function CH.window(actor, attack)
 end
 
 function CH.has_window(actor)
-    return (data_of(actor).cooldown or 0) <= 0
+    return Prefs.rule("chargeWindow") and (data_of(actor).cooldown or 0) <= 0
 end
 
 Callback.add(Callback.ON_PLAYER_STEP, function(player)

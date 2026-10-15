@@ -5,7 +5,6 @@ PSE = PSE or {}
 local C       = PSE.Config.melee.signatures
 local V       = PSE.Vanilla
 local Strikes = PSE.Strikes
-local Stamina = PSE.Stamina
 local Rage    = PSE.Rage
 
 local PACTOR         = V.constant("pActor")
@@ -105,7 +104,7 @@ local HEROES = {
                 pick.damage_coeff = C.miner.damage
                 pick.image_xscale = player.image_xscale >= 0 and 1 or -1
                 pick.image_yscale = pick.image_xscale
-                Stamina.exempt(pick)
+                Strikes.exempt(pick)
             end
         end,
     },

@@ -5,22 +5,36 @@ PSE = PSE or {}
 local C      = PSE.Config
 local V      = PSE.Vanilla
 local Roster = PSE.Roster
+local Prefs  = PSE.Prefs
+local Levels = PSE.Levels
 
 local M = {}
 
-function M.get(actor)
+function M.stored(actor)
     local entry = Roster.of(actor)
     if not entry or not entry.tuning then return nil end
 
     local data = Instance.get_data(actor, "magazine", C.namespace)
     if data.entry ~= entry then
         data.entry           = entry
-        data.ammo            = entry.tuning.magazine
+        data.ammo            = M.size(actor, data)
         data.last_shot_frame = -1
         data.reload          = nil
         data.window_cooldown = 0
     end
     return data
+end
+
+function M.get(actor)
+    if not Prefs.rule("magazine") then return nil end
+    return M.stored(actor)
+end
+
+function M.size(actor, data)
+    local base  = data.entry.tuning.magazine
+    local level = Levels.of(actor, data.entry.skill)
+    if level < 1 then return base end
+    return base + level * math.max(1, math.ceil(base * C.skill_levels.magazine))
 end
 
 function M.spend(actor, data)

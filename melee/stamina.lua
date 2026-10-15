@@ -1,4 +1,4 @@
--- Выносливость ближника, окно восстановления и баффы «Одышка» и «Второе дыхание».
+-- Выносливость ближника: тратится только ударом, который попал. Окно восстановления и баффы «Одышка» и «Второе дыхание».
 
 PSE = PSE or {}
 
@@ -8,6 +8,8 @@ local Strikes = PSE.Strikes
 local Reload  = PSE.Reload
 local Assets  = PSE.Assets
 local Rewards = PSE.Rewards
+local Prefs   = PSE.Prefs
+local Levels  = PSE.Levels
 
 local ST = {}
 
@@ -48,32 +50,23 @@ Strikes.on_attack(function(player, kind, attack_info)
     if kind == "strike" then breathe(player, attack_info) end
 end)
 
-local PICK_COLLISION = "gml_Object_oMinerPick_Collision_pActorCollisionBase"
-local EXEMPT = "notStrike"
-local thrown_pick = false
-
-function ST.exempt(inst)
-    Instance.get_data(inst, EXEMPT, NS).on = true
-end
-
-Hook.add_pre(PICK_COLLISION, function(self)
-    thrown_pick = Instance.get_data(self, EXEMPT, NS).on ~= true
-end)
-Hook.add_post(PICK_COLLISION, function()
-    thrown_pick = false
-end)
-
 Hook.add_post(gm.constants.fire_direct, function(self, other, result, args)
-    if not thrown_pick or not Net.host then return end
+    if not Strikes.thrown_hitting() or not Net.host then return end
     if not self or self.object_index ~= gm.constants.oP then return end
     breathe(self, result.value)
 end)
+
+local function capacity(player, entry)
+    return entry.strikes * (1 + C.skill_levels.stamina * Levels.of(player, entry.skill))
+end
+
+ST.capacity = capacity
 
 local function data_of(player, entry)
     local data = Instance.get_data(player, "stamina", NS)
     if data.entry ~= entry then
         data.entry       = entry
-        data.value       = entry.strikes
+        data.value       = capacity(player, entry)
         data.last_strike = -1
         data.breathless  = false
         data.cooldown    = 0
@@ -91,7 +84,7 @@ function ST.share(player)
     local entry = Strikes.of(player)
     if not entry then return 0 end
     local data = data_of(player, entry)
-    return data.value / entry.strikes
+    return data.value / capacity(player, entry)
 end
 
 local function set_breathless(player, data, on)
@@ -100,7 +93,8 @@ local function set_breathless(player, data, on)
     Rewards.grant(player, on and "breathless" or "breathlessEnd")
 end
 
-function ST.spend(player)
+local function spend(player)
+    if not Prefs.rule("stamina") then return end
     local entry = Strikes.of(player)
     if not entry then return end
     local data = data_of(player, entry)
@@ -109,13 +103,17 @@ function ST.spend(player)
 
     if data.value <= 0 then set_breathless(player, data, true) end
 
-    if data.value / entry.strikes < C.low and data.cooldown <= 0 and not data.window then
+    if data.value / capacity(player, entry) < C.low and data.cooldown <= 0 and not data.window then
         local from, to = Reload.window(C.window_bar)
         data.window = { start = data.last_strike, from = from, to = to }
     end
 end
 
-Strikes.on_strike(ST.spend)
+local PAYS = { strike = true, lunge = true, launcher = true }
+
+Strikes.on_hits(function(player, hits, kind)
+    if hits > 0 and PAYS[kind] then spend(player) end
+end)
 
 function ST.window_bar(player)
     local entry = Strikes.of(player)
@@ -132,7 +130,7 @@ end
 
 local function refill(player, entry)
     local data = data_of(player, entry)
-    data.value  = entry.strikes
+    data.value  = capacity(player, entry)
     data.window = nil
     set_breathless(player, data, false)
 end
@@ -143,14 +141,21 @@ Callback.add(Callback.ON_PLAYER_STEP, function(player)
     if not entry then return end
 
     local data = data_of(player, entry)
+    local full = capacity(player, entry)
+
+    if not Prefs.rule("stamina") then
+        if data.value < full or data.window or data.breathless then refill(player, entry) end
+        return
+    end
+
     local now  = Global._current_frame
     if now < data.last_strike then data.last_strike = now end
     if data.cooldown > 0 then data.cooldown = data.cooldown - 1 end
 
-    if now - data.last_strike >= C.regen_delay and data.value < entry.strikes then
-        data.value = math.min(entry.strikes, data.value + entry.strikes / C.regen_time)
+    if now - data.last_strike >= C.regen_delay and data.value < full then
+        data.value = math.min(full, data.value + full / C.regen_time)
     end
-    if data.value / entry.strikes >= C.low then set_breathless(player, data, false) end
+    if data.value / full >= C.low then set_breathless(player, data, false) end
 
     local window = data.window
     if not window then return end
@@ -168,7 +173,7 @@ Callback.add(Callback.ON_PLAYER_STEP, function(player)
     data.cooldown = C.second_wind.duration
 
     if progress >= window.from and progress <= window.to then
-        data.value  = entry.strikes * C.overflow
+        data.value  = full * C.overflow
         data.caught = now
         set_breathless(player, data, false)
         Assets.play("perfect", player)

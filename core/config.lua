@@ -29,7 +29,7 @@ PSE.Config = {
         pilotZ     = 35,
         pilotZ2    = 30,
         robomandoZ = 30,
-        sniperZ    = 20,
+        sniperZ    = 85,
         huntressZ  = 25,
         artiZ      = 30,
     },
@@ -47,6 +47,12 @@ PSE.Config = {
 
     miss_refill = 0.5,
 
+    skill_levels = {
+        magazine   = 0.10,
+        window     = 0.02,
+        window_max = 0.40,
+    },
+
     perfect_reload = {
         duration     = 7 * FPS,
         attack_speed = 0.25,
@@ -55,6 +61,33 @@ PSE.Config = {
     },
 
     action_key = 82,
+
+    options = {
+        rules = {
+            magazine      = true,
+            perfectReload = true,
+            aim           = true,
+            chargeWindow  = true,
+            chefCatch     = true,
+            stamina       = true,
+            finisher      = true,
+            lungeLauncher = true,
+        },
+        hud = {
+            preset   = "topRight",
+            x        = 0.5,
+            y        = 0.15,
+            series   = true,
+            screenFx = true,
+            barAtCursor = false,
+        },
+        presets = {
+            topRight    = { right = 104, top = 30 },
+            topLeft     = { left = 150, top = 30 },
+            bottomRight = { right = 16, bottom = 100 },
+            bottomLeft  = { left = 16, bottom = 100 },
+        },
+    },
 
     melee = {
         stamina = {
@@ -69,6 +102,10 @@ PSE.Config = {
             banditZ2   = 6,
             sniperZ2   = 5,
             chefZ2     = 8,
+        },
+        skill_levels = {
+            stamina = 0.10,
+            rage    = 0.10,
         },
         regen_delay = 2 * FPS,
         regen_time  = 1.5 * FPS,

@@ -7,6 +7,7 @@ local NS      = PSE.Config.namespace
 local V       = PSE.Vanilla
 local Assets  = PSE.Assets
 local Rewards = PSE.Rewards
+local Prefs   = PSE.Prefs
 
 local DICE    = V.skill("chefZ").value
 local KNIFE   = V.constant("oChefKnife")
@@ -80,6 +81,13 @@ Callback.add(Callback.ON_PLAYER_STEP, function(player)
     if not Util.bool(player.is_local) or not CH.is_dice(player) then return end
 
     local data = data_of(player)
+
+    if not Prefs.rule("chefCatch") then
+        data.normal, data.mince = false, false
+        data.seen, data.arrived, data.recast = nil, nil, nil
+        return
+    end
+
     local now  = Global._current_frame
     if (data.cooldown or 0) > 0 then data.cooldown = data.cooldown - 1 end
 

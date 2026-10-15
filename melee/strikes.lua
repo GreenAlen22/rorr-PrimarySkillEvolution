@@ -4,13 +4,14 @@ PSE = PSE or {}
 
 local C  = PSE.Config
 local V  = PSE.Vanilla
+local NS = PSE.Config.namespace
 
 local MELEE = {
     acridZ     = { hero = "acrid",     sparks = "sBite2" },
     acridZ2    = { hero = "acrid",     sparks = "sBite1" },
     handZ      = { hero = "hand",      sparks = "sSparks1" },
     minerZ     = { hero = "miner",     sparks = "sSparks7" },
-    minerZ2    = { hero = "miner",     thrown = true, sparks = "sSparks12" },
+    minerZ2    = { hero = "miner",     sparks = "sSparks12" },
     mercenaryZ = { hero = "mercenary", sparks = "sSparks9" },
     loaderZ    = { hero = "loader",    sparks = "sSparks7" },
     drifterZ   = { hero = "drifter",   sparks = "sSparks7" },
@@ -33,7 +34,6 @@ for name, v in pairs(MELEE) do
         skill   = V.skill(name),
         strikes = strikes,
         sparks  = V.constant(v.sparks),
-        thrown  = v.thrown or false,
     }
     S.by_skill[entry.skill.value] = entry
 end
@@ -46,12 +46,6 @@ function S.busy(actor)
     return actor.actor_state_current_id ~= -1 or tonumber(actor.activity) ~= 0
 end
 
-local on_strike = {}
-
-function S.on_strike(fn)
-    on_strike[#on_strike + 1] = fn
-end
-
 local current = nil
 
 Hook.add_post(gm.constants.skill_util_update_heaven_cracker, function(self, other, result, args)
@@ -61,7 +55,6 @@ Hook.add_post(gm.constants.skill_util_update_heaven_cracker, function(self, othe
 
     current = { player = self.id, frame = Global._current_frame }
     S.counters.strikes = S.counters.strikes + 1
-    for _, fn in ipairs(on_strike) do fn(self, entry) end
 end)
 
 local ATTACKS = {
@@ -176,6 +169,47 @@ end
 for _, attack in ipairs(ATTACKS) do
     Hook.add_pre(attack.step, begin)
     Hook.add_post(attack.step, finish)
+end
+
+local PICK_COLLISION = "gml_Object_oMinerPick_Collision_pActorCollisionBase"
+local EXEMPT = "notStrike"
+local thrown_pick = nil
+
+function S.exempt(inst)
+    Instance.get_data(inst, EXEMPT, NS).on = true
+end
+
+function S.thrown_hitting()
+    return thrown_pick ~= nil
+end
+
+Hook.add_pre(PICK_COLLISION, function(self)
+    thrown_pick = Instance.get_data(self, EXEMPT, NS).on ~= true and self or nil
+end)
+Hook.add_post(PICK_COLLISION, function()
+    thrown_pick = nil
+end)
+
+local function thrown_hit(player)
+    for _, fn in ipairs(on_hits) do fn(player, 1, "strike") end
+end
+
+Hook.add_post(gm.constants.fire_direct, function(self, other, result, args)
+    if not thrown_pick or not Net.host then return end
+    if not self or self.object_index ~= gm.constants.oP then return end
+    local once = Instance.get_data(thrown_pick, "hitOnce", NS)
+    if once.on then return end
+    once.on = true
+    if Util.bool(self.is_local) then
+        thrown_hit(self)
+    else
+        PSE.Net.pick_hit:send_to_all(self)
+    end
+end)
+
+function S.receive_thrown_hit(player)
+    if not Instance.exists(player) or not Util.bool(player.is_local) then return end
+    thrown_hit(player)
 end
 
 S.counters.damage, S.counters.by_parent, S.counters.targets = 0, 0, 0

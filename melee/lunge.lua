@@ -9,6 +9,7 @@ local Strikes  = PSE.Strikes
 local Stamina  = PSE.Stamina
 local Cursor   = PSE.Cursor
 local Assets   = PSE.Assets
+local Prefs    = PSE.Prefs
 
 local BLOCK = V.constant("pBlock")
 
@@ -90,7 +91,8 @@ Callback.add(Callback.ON_PLAYER_STEP, function(player)
     local airborne = Util.bool(player.free)
     if not airborne then data.air_used = false end
 
-    if not airborne or not Util.bool(player:control(PSE.Options.action.verb, 1)) then return end
+    if not airborne or not Prefs.rule("lungeLauncher")
+        or not Util.bool(player:control(PSE.Options.action.verb, 1)) then return end
 
     if Stamina.took_action(player) or data.cooldown > 0 or data.air_used
         or Strikes.busy(player) then return end
@@ -101,7 +103,6 @@ Callback.add(Callback.ON_PLAYER_STEP, function(player)
     local angle = Cursor.angle(player, player.x, player.y)
         or (player.image_xscale >= 0 and 0 or 180)
     start(player, data, angle)
-    Stamina.spend(player)
     Assets.play("lunge", player)
     if Net.online then PSE.Net.lunge:send_to_all(player, angle) end
 end)

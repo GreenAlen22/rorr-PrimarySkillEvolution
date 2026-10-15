@@ -55,14 +55,14 @@ Callback.add(Callback.ON_PLAYER_STEP, function(player)
             angle = math.random() * 180,
         }
         Assets.play("slash", player)
-        player:screen_shake(2)
+        Assets.shake(player, 2)
     end
 
     if not active.shattered and t >= C.shatter then
         active.shattered = true
         strike(player, C.final_damage)
         Assets.play("shatter", player)
-        player:screen_shake(10)
+        Assets.shake(player, 10)
     end
 
     if t >= C.length then active = nil end

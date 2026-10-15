@@ -18,7 +18,7 @@ Callback.add(Callback.ON_PLAYER_HUD_DRAW, function(player, x, y)
     local data = Magazine.get(player)
     if not data then return end
 
-    local text = data.ammo.."/"..data.entry.tuning.magazine
+    local text = data.ammo.."/"..Magazine.size(player, data)
     local tx, ty = x + 13, y - 7
 
     gm.draw_set_font(Global.fntSquareSmall)
@@ -43,7 +43,7 @@ Hook.add_post("gml_Object_oP_Draw_73", function(self, other)
 
     local reload = data.reload
     local from, to
-    if reload.window then from, to = Reload.window(Reload.frames(self, data)) end
+    if reload.window then from, to = Reload.window_of(self, data) end
     Bar.draw(self, reload.progress, from, to,
         reload.missed and COLOR_MISSED or reload_color(self))
 end)

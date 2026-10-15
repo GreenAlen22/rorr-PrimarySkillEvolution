@@ -1,4 +1,4 @@
--- Интерфейс ближнего боя: шкалы, окно, откаты, буква серии.
+-- Интерфейс ближнего боя: шкалы там, где их поставил игрок, окно, откаты, буква серии.
 
 PSE = PSE or {}
 
@@ -10,6 +10,8 @@ local Lunge    = PSE.Lunge
 local Launcher = PSE.Launcher
 local Bar      = PSE.Bar
 local Meter    = PSE.Assets.meter
+local Prefs    = PSE.Prefs
+local PRESETS  = PSE.Config.options.presets
 
 local FA_LEFT, FA_RIGHT, FA_TOP = 0, 2, 0
 local BM_NORMAL, BM_ADD = 0, 1
@@ -26,7 +28,7 @@ local function screen_size()
     return gm.display_get_gui_width() / scale, gm.display_get_gui_height() / scale
 end
 
-local METER_RIGHT, METER_TOP, METER_GAP = 104, 30, 4
+local METER_GAP = 4
 
 local TROUGH_Y = 11
 local EMBLEM_RAGE, EMBLEM_STAMINA = 0, 1
@@ -67,25 +69,48 @@ end
 
 local meters_ready = Meter.frame and Meter.fill and Meter.emblem
 
+local function meters_origin(w, h, width, height)
+    local preset = Prefs.hud("preset")
+    if preset == "custom" then
+        local x = math.max(0, math.min(w - width, Prefs.hud("x") * w))
+        local y = math.max(0, math.min(h - height, Prefs.hud("y") * h))
+        return math.floor(x), math.floor(y)
+    end
+    local p = PRESETS[preset]
+    local x = p.left or (w - p.right - width)
+    local y = p.top or (h - p.bottom - height)
+    return math.floor(x), math.floor(y)
+end
+
 Callback.add(Callback.ON_HUD_DRAW, function()
     if not meters_ready then return end
     local player = Player.get_local()
     if not Instance.exists(player) or player.object_index ~= gm.constants.oP then return end
     if not Strikes.of(player) then return end
 
-    local w = screen_size()
-    local x = math.floor(w - METER_RIGHT - Meter.frame.width)
-    local y = METER_TOP
+    local stamina = Prefs.rule("stamina")
+    local rage    = Prefs.rule("finisher")
+    local count   = (stamina and 1 or 0) + (rage and 1 or 0)
+    if count == 0 then return end
 
-    local share  = Stamina.share(player)
-    local color  = share < PSE.Config.melee.low and COLOR_LOW or COLOR_STAMINA
-    local flash  = Meter.flash.stamina
-    meter(x - Meter.frame.width - METER_GAP, y, share, color, EMBLEM_STAMINA, flash,
-        flash_frame(flash, Stamina.data(player).caught), math.max(0, share - 1))
+    local fw = Meter.frame.width
+    local w, h = screen_size()
+    local x, y = meters_origin(w, h, count * fw + (count - 1) * METER_GAP, Meter.frame.height)
 
-    flash = Meter.flash.rage
-    meter(x, y, Finisher.share(player), Bar.survivor_color(player), EMBLEM_RAGE,
-        flash, flash_frame(flash, Finisher.data(player).fired), 0)
+    if stamina then
+        local share = Stamina.share(player)
+        local color = share < PSE.Config.melee.low and COLOR_LOW or COLOR_STAMINA
+        local flash = Meter.flash.stamina
+        meter(x, y, share, color, EMBLEM_STAMINA, flash,
+            flash_frame(flash, Stamina.data(player).caught), math.max(0, share - 1))
+        x = x + fw + METER_GAP
+    end
+
+    if rage then
+        local flash = Meter.flash.rage
+        meter(x, y, Finisher.share(player), Bar.survivor_color(player), EMBLEM_RAGE,
+            flash, flash_frame(flash, Finisher.data(player).fired), 0)
+    end
 
     gm.draw_set_color(Color.WHITE)
 end)
@@ -134,6 +159,7 @@ Callback.add(Callback.ON_HUD_DRAW, function()
     if not Instance.exists(player) or player.object_index ~= gm.constants.oP then return end
     if not Strikes.of(player) then return end
 
+    if not Prefs.hud("series") then return end
     local rank = Series.rank(player)
     if rank <= 0 then return end
 

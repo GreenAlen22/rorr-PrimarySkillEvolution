@@ -16,6 +16,10 @@ local modules = {
     "core/net",
     "core/rewards",
 
+    "core/prefs",
+
+    "core/levels",
+
     "core/cursor",
 
     "core/assets",
@@ -24,6 +28,7 @@ local modules = {
     "gunners/magazine",
     "gunners/reload",
     "gunners/perfect_reload",
+    "gunners/sniper",
     "gunners/aim",
     "gunners/grenade",
 
@@ -76,8 +81,8 @@ local function load(name)
 end
 
 local expected = {
-    "Config", "Vanilla", "Net", "Rewards", "Cursor", "Assets",
-    "Roster", "Magazine", "Reload", "PerfectReload", "Aim", "Grenade",
+    "Config", "Vanilla", "Net", "Rewards", "Prefs", "Levels", "Cursor", "Assets",
+    "Roster", "Magazine", "Reload", "PerfectReload", "Sniper", "Aim", "Grenade",
     "Charge", "Huntress", "Chef", "Chakram",
     "Strikes", "Stamina", "Series", "Rage", "JudgementCut", "Signatures", "Finisher",
     "Lunge", "Launcher",

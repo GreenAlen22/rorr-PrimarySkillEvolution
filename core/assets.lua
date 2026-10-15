@@ -2,7 +2,8 @@
 
 PSE = PSE or {}
 
-local C = PSE.Config
+local C     = PSE.Config
+local Prefs = PSE.Prefs
 
 local A = {}
 
@@ -33,6 +34,9 @@ A.meter = {
         stamina = sprite("staminaFlash", 8),
     },
 }
+
+local rage_icon = sprite("rageIcon", 1)
+if rage_icon then rage_icon:set_origin(rage_icon.width // 2, rage_icon.height // 2) end
 
 local frame = A.meter.frame
 for _, flash in pairs(A.meter.flash) do
@@ -70,7 +74,7 @@ A.steady_hand_icon   = buff_icon("burstSpeed")
 A.sharp_cleaver_icon = buff_icon("sunder")
 A.breathless_icon    = buff_icon("slow")
 A.second_wind_icon   = buff_icon("shield")
-A.rage_icon          = buff_icon("warbanner")
+A.rage_icon          = rage_icon and { sprite = rage_icon, subimage = 0 } or buff_icon("warbanner")
 
 A.sounds = {}
 
@@ -83,6 +87,10 @@ end
 function A.play(event, actor)
     local c = A.sounds[event]
     c.sound:play(actor.x, actor.y, c.volume, c.pitch)
+end
+
+function A.shake(actor, amount)
+    if Prefs.hud("screenFx") then actor:screen_shake(amount) end
 end
 
 PSE.Assets = A

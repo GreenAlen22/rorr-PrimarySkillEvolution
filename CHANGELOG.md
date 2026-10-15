@@ -2,6 +2,28 @@
 
 All notable Primary Skill Evolution changes.
 
+## [0.2.0]
+
+### Added
+
+- Settings in Game settings > Mods tab:
+  - switch off any of the mod's mechanics: magazine and reload, Perfect Reload, aim at cursor, charge window, cleaver catch, stamina, finisher and Rage, Lunge and Launcher. Online, the host's settings apply to everyone;
+  - move the stamina and rage meters to any corner or to a spot of your own;
+  - hide the series rank and the screen effects;
+  - draw the reload bar, the stamina window and Pierce's charge as a ring around the cursor;
+  - reset everything to default.
+- Settings are kept between sessions.
+- Skills++ (optional): each level of a gunner's primary adds a tenth to its magazine, at least one round, and widens the reload window by 2% of the bar, up to 40%.
+- Skills++ (optional): each level of a melee primary adds 10% stamina and makes Rage last 10% longer.
+- Sniper: a perfect reload of Snipe also gives Perfect Reload, once every 7 seconds.
+
+### Changed
+
+- Sniper's Snipe aims almost straight up and down: ±85° instead of ±20°.
+- Stamina is spent only by strikes, Miner's thrown pickaxes, lunges and launchers that hit an enemy. Swinging at the air no longer brings up the refill window.
+- Miner's thrown pickaxes fill the finisher bar when they hit, not when thrown.
+- Rage has its own buff icon: the gem from the rage meter.
+
 ## [0.1.1]
 
 ### Changed

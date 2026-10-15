@@ -23,7 +23,7 @@ local VANILLA = {
         release = "pilotZ2Release",
     },
 
-    sniperZ = { activity = 1.1, vanilla_reload = true },
+    sniperZ = { activity = 1.1, vanilla_reload = true, tracers = { "SNIPER1" } },
 
     enforcerZ2 = { states = { "enforcerZ2" }, vanilla_reload = true, grenade = true },
 
@@ -51,6 +51,7 @@ for name, v in pairs(VANILLA) do
 
     local entry = {
         name      = name,
+        skill     = skill,
         tuning    = tuning,
         cone      = cone,
         shot      = v.shot or "bullet",

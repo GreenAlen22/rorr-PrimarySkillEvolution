@@ -3,8 +3,11 @@
 PSE = PSE or {}
 
 local C       = PSE.Config.melee.rage
+local GROWTH  = PSE.Config.melee.skill_levels.rage
 local Assets  = PSE.Assets
 local Rewards = PSE.Rewards
+local Strikes = PSE.Strikes
+local Levels  = PSE.Levels
 
 local RA = {}
 
@@ -13,8 +16,14 @@ RA.buff.icon_sprite   = Assets.rage_icon.sprite
 RA.buff.icon_subimage = Assets.rage_icon.subimage
 RA.buff.is_debuff     = false
 
+function RA.duration(actor)
+    local entry = Strikes.of(actor)
+    local level = entry and Levels.of(actor, entry.skill) or 0
+    return math.floor(C.duration * (1 + GROWTH * level))
+end
+
 Rewards.define("rage", function(actor)
-    Rewards.refresh(actor, RA.buff, C.duration)
+    Rewards.refresh(actor, RA.buff, RA.duration(actor))
 end)
 
 function RA.active(actor)

@@ -2,8 +2,9 @@
 
 PSE = PSE or {}
 
-local C  = PSE.Config.melee.signatures.mercenary
-local JC = PSE.JudgementCut
+local C     = PSE.Config.melee.signatures.mercenary
+local JC    = PSE.JudgementCut
+local Prefs = PSE.Prefs
 
 local PR_TRIANGLELIST = 4
 local DARK_ALPHA = 0.55
@@ -69,7 +70,7 @@ end
 Callback.add(Callback.ON_PLAYER_STEP, function(player)
     if not Util.bool(player.is_local) then return end
     local st = JC.state()
-    if not st or st.player ~= player.id then
+    if not st or st.player ~= player.id or not Prefs.hud("screenFx") then
         if shards then shards = nil; free_snapshot() end
         return
     end
@@ -133,7 +134,7 @@ end
 
 Callback.add(Callback.ON_HUD_DRAW, function()
     local st = JC.state()
-    if not st then return end
+    if not st or not Prefs.hud("screenFx") then return end
     local player = Player.get_local()
     if not Instance.exists(player) or player.id ~= st.player then return end
 
