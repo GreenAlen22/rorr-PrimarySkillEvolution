@@ -95,7 +95,8 @@ Callback.add(Callback.ON_PLAYER_STEP, function(player)
     local reload  = data.reload
 
     if not reload then
-        if pressed and data.ammo < size then R.start(player, data) end
+        local charging = PSE.Charge.drawing(player) or PSE.Charge.reported(player)
+        if pressed and data.ammo < size and not charging then R.start(player, data) end
         return
     end
 

@@ -29,12 +29,23 @@ local VANILLA = {
 
     engineerZ  = { states = { "engineerZ" },  shot = "volley", no_aim = true },
     engineerZ2 = { states = { "engineerZ2" }, shot = "shell",  no_aim = true, release = "engineerZ2End" },
+
+    huntressZ2 = { states = { "huntressZ2Fire", "huntressZ2Fire2" }, shot = "enter", no_aim = true },
 }
 
 local R = {
-    by_skill        = {},
-    primary_tracers = {},
+    by_skill = {},
 }
+
+local DRILL = V.tracer("DRILL")
+
+function R.add(entry)
+    if R.by_skill[entry.skill.value] then
+        error("gunner "..entry.skill.namespace.."-"..entry.skill.identifier..": already registered", 2)
+    end
+    entry.tracers[DRILL] = true
+    R.by_skill[entry.skill.value] = entry
+end
 
 for name, v in pairs(VANILLA) do
     local tuning = C.gunners[name]
@@ -60,14 +71,15 @@ for name, v in pairs(VANILLA) do
         grenade   = v.grenade or false,
         combo_end = v.combo_end or false,
         release   = v.release and V.state(v.release) or nil,
+        tracers   = {},
+        aim       = "bullet",
+        share_aim = false,
     }
     for _, s in ipairs(v.states or {}) do entry.states[V.state(s)] = true end
-    for _, t in ipairs(v.tracers or {}) do R.primary_tracers[V.tracer(t)] = true end
+    for _, t in ipairs(v.tracers or {}) do entry.tracers[V.tracer(t)] = true end
 
-    R.by_skill[skill.value] = entry
+    R.add(entry)
 end
-
-R.primary_tracers[V.tracer("DRILL")] = true
 
 R.pilot_cling = V.state("pilotCling")
 
@@ -75,15 +87,17 @@ function R.of(actor)
     return R.by_skill[actor:get_default_skill(Skill.Slot.PRIMARY).skill_id]
 end
 
+function R.in_states(actor, entry)
+    if entry.states[actor.actor_state_current_id] then return true end
+    return entry.activity ~= nil and actor.activity == entry.activity
+end
+
 function R.firing_primary(inst)
     if inst.object_index ~= gm.constants.oP or not Util.bool(inst.is_local) then return nil end
 
     local entry = R.of(inst)
     if not entry or entry.shot ~= "bullet" then return nil end
-
-    if entry.states[inst.actor_state_current_id] then return entry end
-    if entry.activity and inst.activity == entry.activity then return entry end
-    return nil
+    return R.in_states(inst, entry) and entry or nil
 end
 
 PSE.Roster = R

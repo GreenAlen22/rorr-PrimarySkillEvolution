@@ -30,14 +30,23 @@ function RA.active(actor)
     return actor:buff_count(RA.buff) > 0
 end
 
+function RA.numbers(actor)
+    local entry = Strikes.of(actor)
+    if entry and not entry.hero then return C.modded end
+    return C
+end
+
 RecalculateStats.add(function(actor, api)
-    if RA.active(actor) then api.damage_mult(C.damage) end
+    if not RA.active(actor) then return end
+    local n = RA.numbers(actor)
+    api.damage_mult(n.damage)
+    if n.attack_speed then api.attack_speed_add(n.attack_speed) end
 end)
 
 Callback.add(Callback.ON_HIT_PROC, function(attacker, target, hit_info)
     if not Net.host then return end
     if not attacker or not Instance.exists(attacker) or not RA.active(attacker) then return end
-    attacker:heal(hit_info.damage_true * C.lifesteal)
+    attacker:heal(hit_info.damage_true * RA.numbers(attacker).lifesteal)
 end)
 
 PSE.Rage = RA

@@ -42,8 +42,17 @@ end
 Hook.add_post("gml_Object_oP_Draw_73", function(self, other)
     if not Util.bool(self.is_local) then return end
 
+    if not PSE.Prefs.rule("chargeWindow") then return end
+
+    local progress, from, to = Charge.reported(self)
+    if progress then
+        local row = PSE.Stamina.window_bar(self) and 1 or 0
+        Bar.draw(self, progress, from, to, Bar.survivor_color(self), row)
+        return
+    end
+
     local attack, charge = Charge.drawing(self)
-    if not attack or not PSE.Prefs.rule("chargeWindow") then return end
+    if not attack then return end
 
     if attack.name == "huntressZ2" then
         huntress(self, attack, charge)

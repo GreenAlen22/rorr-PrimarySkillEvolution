@@ -2,6 +2,19 @@
 
 All notable Primary Skill Evolution changes.
 
+## [0.3.0]
+
+### Added
+
+- An API for other mods: a survivor mod, or an addon for one, can give that survivor's primary attack the gunner treatment (magazine, reload, aim at cursor) or the melee one (stamina, finisher and Rage, series, Lunge and Launcher). PSE: Modded Survivors is built on it.
+- Huntress's Pierce is a gunner: 4 arrows in the magazine, 1.5 s reload with its window. A full charge costs one arrow.
+- Loader's Bullet Punch is melee: 4 strikes in a full stamina bar, the finisher with Loader's signature.
+- Melee survivors from other mods get a shared finisher blast in their own color and a stronger Rage: +50% damage, 15% lifesteal, +20% attack speed.
+
+### Changed
+
+- The charge window of Pierce and Bullet Punch is wider: 65-85% of the charge instead of 70-85%. With Skills++, each level of the primary widens it by 2%, up to 40%.
+
 ## [0.2.0]
 
 ### Added

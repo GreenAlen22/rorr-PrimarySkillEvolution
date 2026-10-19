@@ -121,4 +121,29 @@ N.pick_hit:set_serializers(
     end
 )
 
+N.strike_hit = Packet.new("strikeHit")
+N.strike_hit:set_serializers(
+    function(buffer, player, hits)
+        buffer:write_instance(player)
+        buffer:write_byte(hits)
+    end,
+    function(buffer, _)
+        local player = buffer:read_instance()
+        local hits   = buffer:read_byte()
+        if Net.host then return end
+        PSE.Strikes.receive_strike_hit(player, hits)
+    end
+)
+
+N.rage_strike = Packet.new("rageStrike")
+N.rage_strike:set_serializers(
+    function(buffer, player)
+        buffer:write_instance(player)
+    end,
+    function(buffer, _)
+        local player = buffer:read_instance()
+        PSE.Finisher.receive_strike(player)
+    end
+)
+
 PSE.Net = N

@@ -155,7 +155,7 @@ Console.new{
             return
         end
         if args[1] == "low"  then stamina.value = 1 end
-        if args[1] == "full" then PSE.Finisher.data(p).charge = PSE.Config.melee.finisher.strikes end
+        if args[1] == "full" then PSE.Finisher.data(p).charge = PSE.Finisher.threshold(p) end
         if args[1] == "rank" then PSE.Series.add(p, PSE.Config.melee.series.thresholds[5]) end
 
         local entry = stamina.entry
@@ -168,10 +168,10 @@ Console.new{
             window = "ready"
         end
         say(string.format("%s (%s, Skills++ level %d): stamina %.1f/%.1f%s, window %s, finisher %d/%d%s (rage %.1f s), series %s",
-            entry.name, entry.hero, PSE.Levels.of(p, entry.skill),
+            entry.name, entry.hero or "-", PSE.Levels.of(p, entry.skill),
             stamina.value, PSE.Stamina.capacity(p, entry),
             stamina.breathless and " (breathless)" or "",
-            window, PSE.Finisher.data(p).charge, PSE.Config.melee.finisher.strikes,
+            window, PSE.Finisher.data(p).charge, PSE.Finisher.threshold(p),
             PSE.Finisher.raging(p) and ", rage" or "",
             PSE.Rage.duration(p) / PSE.Config.fps,
             PSE.Series.LETTERS[PSE.Series.rank(p)] or "-"))

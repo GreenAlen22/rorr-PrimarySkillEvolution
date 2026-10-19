@@ -57,6 +57,16 @@ for hero, mirrors in pairs{
     end
 end
 
+do
+    local shade = sprite("rageStrikeModded", 8)
+    local core  = sprite("rageStrikeModdedCore", 8)
+    if shade and core then
+        shade:set_origin(shade.width // 2, shade.height // 2)
+        core:set_origin(core.width // 2, core.height // 2)
+        A.rage_strike_modded = { shade = shade, core = core }
+    end
+end
+
 if #A.failed > 0 then
     log.warning("PrimarySkillEvolution: sprites FAILED -> "..table.concat(A.failed, "; "))
 end

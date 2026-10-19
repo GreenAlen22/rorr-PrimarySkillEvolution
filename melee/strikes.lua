@@ -14,6 +14,7 @@ local MELEE = {
     minerZ2    = { hero = "miner",     sparks = "sSparks12" },
     mercenaryZ = { hero = "mercenary", sparks = "sSparks9" },
     loaderZ    = { hero = "loader",    sparks = "sSparks7" },
+    loaderZ2   = { hero = "loader",    sparks = "sSparks14" },
     drifterZ   = { hero = "drifter",   sparks = "sSparks7" },
     banditZ2   = { hero = "bandit",    sparks = "sSparks13" },
     sniperZ2   = { hero = "sniper",    sparks = "sSparks14" },
@@ -24,36 +25,59 @@ local S = { by_skill = {} }
 
 S.counters = { strikes = 0, claimed = 0, steps = 0, handled = 0, posthit = 0, hits = 0 }
 
+function S.add(entry)
+    if S.by_skill[entry.skill.value] then
+        error("melee primary "..entry.skill.namespace.."-"..entry.skill.identifier..": already registered", 2)
+    end
+    S.by_skill[entry.skill.value] = entry
+end
+
 for name, v in pairs(MELEE) do
     local strikes = C.melee.stamina[name]
     if not strikes then error("no stamina for melee primary "..name.." in core/config.lua") end
 
-    local entry = {
+    S.add({
         name    = name,
         hero    = v.hero,
         skill   = V.skill(name),
         strikes = strikes,
         sparks  = V.constant(v.sparks),
-    }
-    S.by_skill[entry.skill.value] = entry
+    })
 end
 
 function S.of(actor)
     return S.by_skill[actor:get_default_skill(Skill.Slot.PRIMARY).skill_id]
 end
 
+function S.in_primary(actor, entry)
+    if entry.states and entry.states[actor.actor_state_current_id] then return true end
+    return entry.activity ~= nil and actor.activity == entry.activity
+end
+
 function S.busy(actor)
     return actor.actor_state_current_id ~= -1 or tonumber(actor.activity) ~= 0
 end
 
+local function readable(inst)
+    if inst == nil or not Instance.exists(inst) then return nil end
+    return Instance.wrap(inst)
+end
+
 local current = nil
 
-Hook.add_post(gm.constants.skill_util_update_heaven_cracker, function(self, other, result, args)
-    if not self or self.object_index ~= gm.constants.oP or not Util.bool(self.is_local) then return end
-    local entry = S.of(self)
-    if not entry then return end
+local function striker(self, args)
+    if self and self.object_index == gm.constants.oP then return self end
+    return readable(args[1] and args[1].value)
+end
 
-    current = { player = self.id, frame = Global._current_frame }
+Hook.add_post(gm.constants.skill_util_update_heaven_cracker, function(self, other, result, args)
+    local actor = striker(self, args)
+    if not actor or actor.object_index ~= gm.constants.oP or not Util.bool(actor.is_local) then return end
+    local entry = S.of(actor)
+    if not entry or entry.strike == "attack" then return end
+    if (entry.states or entry.activity) and not S.in_primary(actor, entry) then return end
+
+    current = { player = actor.id, frame = Global._current_frame }
     S.counters.strikes = S.counters.strikes + 1
 end)
 
@@ -66,6 +90,26 @@ local ATTACKS = {
       step = "gml_Object_oDirectAttack_Step_1" },
 }
 local EXPLOSION = ATTACKS[1].object
+
+local last_strike = {}
+
+local function attack_strike(actor, entry, object, x, y)
+    if object ~= EXPLOSION or not S.in_primary(actor, entry) then return false end
+    local reach = C.melee.strike_reach
+    if math.abs(x - actor.x) > reach or math.abs(y - actor.y) > reach then return false end
+    local now  = Global._current_frame
+    local last = last_strike[actor.id]
+    if last and now >= last and now - last <= (entry.gap or 0) then return false end
+    last_strike[actor.id] = now
+    S.counters.strikes = S.counters.strikes + 1
+    return true
+end
+
+Callback.add(Callback.ON_SKILL_ACTIVATE, function(actor, slot)
+    if slot ~= Skill.Slot.PRIMARY then return end
+    local last = last_strike[actor.id]
+    if last and last ~= Global._current_frame then last_strike[actor.id] = nil end
+end)
 
 local claimed = {}
 local STALE = 30
@@ -98,14 +142,27 @@ end
 
 for _, attack in ipairs(ATTACKS) do
     Hook.add_post(attack.fire, function(self, other, result, args)
-        if not self or self.object_index ~= gm.constants.oP or not Util.bool(self.is_local) then return end
-        if not S.of(self) then return end
+        if not self or self.object_index ~= gm.constants.oP then return end
+        local entry = S.of(self)
+        if not entry then return end
 
         local kind = own_kind
-        if not kind then
-            local strike = current
-            kind = (attack.object == EXPLOSION and strike and self.id == strike.player
-                and Global._current_frame == strike.frame) and "strike" or "skill"
+        if Util.bool(self.is_local) then
+            if not kind then
+                local strike = current
+                if attack.object == EXPLOSION and strike and self.id == strike.player
+                    and Global._current_frame == strike.frame then
+                    kind = "strike"
+                elseif entry.strike == "attack" and attack_strike(self, entry, attack.object, args[2].value, args[3].value) then
+                    kind = "strike"
+                else
+                    kind = "skill"
+                end
+            end
+        else
+            if not Net.host or not entry.host
+                or not attack_strike(self, entry, attack.object, args[2].value, args[3].value) then return end
+            kind = "strike"
         end
         local inst = claim(attack.object, self, kind, args[2].value, args[3].value)
         if not inst then return end
@@ -163,7 +220,11 @@ local function finish()
     S.counters.hits = S.counters.hits + p.hits
     if not Instance.exists(p.player) then return end
     local player = Instance.wrap(p.player)
-    for _, fn in ipairs(on_hits) do fn(player, p.hits, p.kind) end
+    if Util.bool(player.is_local) then
+        for _, fn in ipairs(on_hits) do fn(player, p.hits, p.kind) end
+    elseif Net.host and p.kind == "strike" then
+        PSE.Net.strike_hit:send_to_all(player, math.min(p.hits, 255))
+    end
 end
 
 for _, attack in ipairs(ATTACKS) do
@@ -225,13 +286,17 @@ function S.on_kill(fn)
     on_kill[#on_kill + 1] = fn
 end
 
+function S.receive_strike_hit(player, hits)
+    if not Instance.exists(player) or not Util.bool(player.is_local) then return end
+    S.counters.hits = S.counters.hits + hits
+    for _, fn in ipairs(on_hits) do fn(player, hits, "strike") end
+    for _ = 1, hits do
+        for _, fn in ipairs(on_damage) do fn(player, "strike", nil, 0, false, nil) end
+    end
+end
+
 local last_hit = {}
 local last_prune = 0
-
-local function readable(inst)
-    if inst == nil or not Instance.exists(inst) then return nil end
-    return Instance.wrap(inst)
-end
 
 DamageCalculate.add(function(api)
     S.counters.damage = S.counters.damage + 1

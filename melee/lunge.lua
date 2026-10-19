@@ -63,7 +63,8 @@ end
 
 local function strike(player, entry, m)
     local x, y = player.x, player.y
-    Strikes.explode(player, "lunge", (x + m.x0) / 2, (y + m.y0) / 2, entry.skill.damage, entry.sparks,
+    local damage = C.damage_of[entry.name] or entry.skill.damage
+    Strikes.explode(player, "lunge", (x + m.x0) / 2, (y + m.y0) / 2, damage, entry.sparks,
         math.abs(x - m.x0) + MARGIN, math.abs(y - m.y0) + MARGIN)
 end
 

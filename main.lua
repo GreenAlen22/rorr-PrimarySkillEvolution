@@ -7,6 +7,13 @@ mods["ReturnsAPI-ReturnsAPI"].auto{
     mp        = true,
 }
 
+api = setmetatable({}, { __index = function(_, key)
+    if key == "RAPI" then return nil end
+    error("Primary Skill Evolution API ("..tostring(key).."): use it inside Initialize.add at"
+        .." Callback.Priority.AFTER - PSE builds it in its own initialization; if you already"
+        .." are, PSE failed to initialize (see pse_status)", 2)
+end })
+
 local PATH = _ENV["!plugins_mod_folder_path"].."\\"
 
 local modules = {
@@ -47,6 +54,8 @@ local modules = {
     "melee/lunge",
     "melee/launcher",
 
+    "core/api",
+
     "ui/bar",
     "ui/ammo_hud",
     "ui/aim_reticle",
@@ -85,7 +94,7 @@ local expected = {
     "Roster", "Magazine", "Reload", "PerfectReload", "Sniper", "Aim", "Grenade",
     "Charge", "Huntress", "Chef", "Chakram",
     "Strikes", "Stamina", "Series", "Rage", "JudgementCut", "Signatures", "Finisher",
-    "Lunge", "Launcher",
+    "Lunge", "Launcher", "Api",
     "Bar", "AmmoHud", "AimReticle", "ChargeHud", "MarkHud", "Trails", "CatchHud", "MeleeHud",
     "JudgementCutFx",
     "Options", "Debug",

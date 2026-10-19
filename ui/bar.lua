@@ -34,8 +34,10 @@ local function arc(cx, cy, r0, r1, from, to, color, alpha)
     gm.draw_primitive_end()
 end
 
-local function ring(cx, cy, progress, from, to, window_color)
-    local r0, r1 = RING_R - RING_W, RING_R
+local ROW_STEP_BAR, ROW_STEP_RING = B.H + 4, RING_W + 3
+
+local function ring(cx, cy, progress, from, to, window_color, row)
+    local r0, r1 = RING_R - RING_W + row * ROW_STEP_RING, RING_R + row * ROW_STEP_RING
     arc(cx, cy, r0 - 1, r1 + 1, 0, 1, COLOR_PLATE, 0.8)
     if from then arc(cx, cy, r0, r1, from, to, window_color, 1) end
 
@@ -46,17 +48,18 @@ local function ring(cx, cy, progress, from, to, window_color)
         cx + gm.lengthdir_x(r1 + MARK_OUT, a), cy + gm.lengthdir_y(r1 + MARK_OUT, a), MARK_W)
 end
 
-function B.draw(player, progress, from, to, window_color)
+function B.draw(player, progress, from, to, window_color, row)
+    row = row or 0
     if Prefs.hud("barAtCursor") and Util.bool(gm.player_util_get_use_mouse_aim(player.value)) then
         ring(math.floor(Global.mouse_x + 0.5), math.floor(Global.mouse_y + 0.5),
-            progress, from, to, window_color)
+            progress, from, to, window_color, row)
         return
     end
 
     local cx = math.floor(player.ghost_x + 0.5)
     local x0 = cx - B.W // 2
     local x1 = x0 + B.W
-    local y1 = math.floor(player.ghost_y + 0.5) + (player.bbox_top - player.y) - 6
+    local y1 = math.floor(player.ghost_y + 0.5) + (player.bbox_top - player.y) - 6 - row * ROW_STEP_BAR
     local y0 = y1 - B.H
 
     gm.draw_set_alpha(0.8)

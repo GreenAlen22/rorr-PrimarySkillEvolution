@@ -19,6 +19,7 @@ PSE.Config = {
         robomandoZ = { magazine = 10, reload = 1.2 * FPS },
         engineerZ  = { magazine = 4,  reload = 1.5 * FPS },
         engineerZ2 = { magazine = 16, reload = 1.6 * FPS },
+        huntressZ2 = { magazine = 4,  reload = 1.5 * FPS },
     },
 
     aim_cone = {
@@ -98,6 +99,7 @@ PSE.Config = {
             minerZ2    = 10,
             mercenaryZ = 14,
             loaderZ    = 12,
+            loaderZ2   = 4,
             drifterZ   = 9,
             banditZ2   = 6,
             sniperZ2   = 5,
@@ -136,6 +138,11 @@ PSE.Config = {
             duration  = 8 * FPS,
             damage    = 1.35,
             lifesteal = 0.10,
+            modded = {
+                damage       = 1.5,
+                lifesteal    = 0.15,
+                attack_speed = 0.20,
+            },
         },
 
         signatures = {
@@ -164,6 +171,9 @@ PSE.Config = {
             frames   = 12,
             cooldown = 1.5 * FPS,
             guard    = 20,
+            damage_of = {
+                loaderZ2 = 1,
+            },
         },
 
         launcher = {
@@ -175,6 +185,8 @@ PSE.Config = {
             cooldown = 12 * FPS,
             sparks_scale = 2.5,
         },
+
+        strike_reach = 160,
 
         kill_window = 1 * FPS,
 
@@ -202,8 +214,8 @@ PSE.Config = {
     },
 
     charge_window = {
-        from = 0.70,
-        to   = 0.85,
+        width = 0.20,
+        to    = 0.85,
         pierce_scale = 2,
     },
 

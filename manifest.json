@@ -1,10 +1,10 @@
 {
 	"name": "PrimarySkillEvolution",
-	"version_number": "0.2.0",
-	"website_url": "",
+	"version_number": "0.3.0",
+	"website_url": "https://github.com/GreenAlen22/rorr-PrimarySkillEvolution/wiki",
 	"description": "Reworks every survivor's primary attack.",
 	"dependencies": [
-		"LuaENVY-ENVY-0.1.0",
-		"ReturnsAPI-ReturnsAPI-0.1.58"
+		"LuaENVY-ENVY-1.2.1",
+		"ReturnsAPI-ReturnsAPI-0.1.59"
 	]
 }

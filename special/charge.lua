@@ -7,6 +7,7 @@ local V       = PSE.Vanilla
 local Assets  = PSE.Assets
 local Rewards = PSE.Rewards
 local Prefs   = PSE.Prefs
+local Levels  = PSE.Levels
 
 local FULL = 150
 
@@ -49,15 +50,24 @@ function CH.drawing(actor)
     return attack, (state_data and state_data.charge) or 0
 end
 
-function CH.window(actor, attack)
-    local from = C.charge_window.from * FULL
-    local to   = C.charge_window.to * FULL
-    local min_width = C.window.min_frames * attack.rate * actor.attack_speed
-    if to - from < min_width then
+function CH.span(actor, rate)
+    local L = C.skill_levels
+    local primary = Skill.wrap(actor:get_default_skill(Skill.Slot.PRIMARY).skill_id)
+    local width = math.min(L.window_max, C.charge_window.width + Levels.of(actor, primary) * L.window)
+    local to   = C.charge_window.to
+    local from = to - width
+    local min_width = C.window.min_frames * rate * actor.attack_speed
+    if width < min_width then
         local middle = (from + to) / 2
         from, to = middle - min_width / 2, middle + min_width / 2
     end
-    return from, math.min(to, FULL)
+    if to > 1 then from, to = from - (to - 1), 1 end
+    return from, to
+end
+
+function CH.window(actor, attack)
+    local from, to = CH.span(actor, attack.rate / FULL)
+    return from * FULL, to * FULL
 end
 
 function CH.has_window(actor)
@@ -103,6 +113,42 @@ Hook.add_pre(gm.constants.actor_set_state_networked, function(self, other, resul
     Assets.play("perfect", actor)
     Rewards.grant(actor, "steadyHand")
 end)
+
+local function last_report(actor)
+    local data = data_of(actor)
+    local now = Global._current_frame
+    if not data.reported or now < data.reported_frame or now - data.reported_frame > 1 then return nil end
+    return data
+end
+
+function CH.report(actor, progress, rate)
+    local previous = last_report(actor)
+    local data = data_of(actor)
+    local before = previous and data.reported
+    data.reported, data.reported_rate, data.reported_frame = progress, rate, Global._current_frame
+    if not before or not CH.has_window(actor) then return end
+    local from = CH.span(actor, rate)
+    if before < from and progress >= from then Assets.play("cue", actor) end
+end
+
+function CH.reported(actor)
+    local data = last_report(actor)
+    if not data then return nil end
+    if not CH.has_window(actor) then return data.reported end
+    return data.reported, CH.span(actor, data.reported_rate)
+end
+
+function CH.release(actor)
+    local progress, from, to = CH.reported(actor)
+    if not progress then return false end
+    local data = data_of(actor)
+    data.reported = nil
+    if not from or progress < from or progress > to then return false end
+    data.cooldown = C.steady_hand.duration
+    Assets.play("perfect", actor)
+    Rewards.grant(actor, "steadyHand")
+    return true
+end
 
 local fire2 = ActorState.wrap(HUNTRESS_FIRE2)
 local ARROW_CLAIM_RADIUS = 160

@@ -53,7 +53,8 @@ Callback.add(Callback.ON_HIT_PROC, function(attacker, target, hit_info)
     if attacker:buff_count(P.buff) <= 0 then return end
 
     local info = hit_info.attack_info
-    if not Roster.primary_tracers[info.tracer_kind] and not Util.bool(info[PRIMARY_KEY]) then return end
+    local entry = Roster.of(attacker)
+    if not (entry and entry.tracers[info.tracer_kind]) and not Util.bool(info[PRIMARY_KEY]) then return end
 
     attacker:heal(hit_info.damage_true * C.lifesteal)
 end)

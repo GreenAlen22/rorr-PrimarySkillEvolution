@@ -29,16 +29,39 @@ function A.turn(cone, side, angle)
     return math.max(-cone, math.min(cone, turn))
 end
 
+function A.direction(player, x, y, side)
+    local entry = Roster.of(player)
+    if not entry or not entry.cone then return nil end
+    local angle = Cursor.angle(player, x, y)
+    if not angle then return nil end
+    return side + A.turn(entry.cone, side, angle)
+end
+
 Hook.add_pre(gm.constants.fire_bullet, function(self, other, result, args)
-    if not self then return end
+    if not self or self.object_index ~= gm.constants.oP then return end
+
     local entry = Roster.firing_primary(self)
-    if not entry or not entry.cone or not A.enabled(self) then return end
+    local angle
+    if entry then
+        if not entry.cone or not A.enabled(self) then return end
+        angle = A.cursor_angle(args[ARG_X].value, args[ARG_Y].value)
+    else
+        if Net.client then return end
+        entry = Roster.of(self)
+        if not entry or entry.aim ~= "host" or not Roster.in_states(self, entry) then return end
+        angle = Cursor.angle(self, args[ARG_X].value, args[ARG_Y].value)
+        if not angle then return end
+    end
 
     local direction = args[ARG_DIRECTION].value
     local side      = math.cos(math.rad(direction)) >= 0 and 0 or 180
-    local cursor    = A.cursor_angle(args[ARG_X].value, args[ARG_Y].value)
+    args[ARG_DIRECTION].value = direction + A.turn(entry.cone, side, angle)
+end)
 
-    args[ARG_DIRECTION].value = direction + A.turn(entry.cone, side, cursor)
+Callback.add(Callback.ON_PLAYER_STEP, function(player)
+    if not Util.bool(player.is_local) then return end
+    local entry = Roster.of(player)
+    if entry and entry.share_aim then Cursor.share(player) end
 end)
 
 PSE.Aim = A

@@ -37,12 +37,12 @@ function M.size(actor, data)
     return base + level * math.max(1, math.ceil(base * C.skill_levels.magazine))
 end
 
-function M.spend(actor, data)
+function M.spend(actor, data, rounds)
     if data.ammo <= 0 then
         PSE.Reload.start(actor, data)
         return
     end
-    data.ammo = data.ammo - 1
+    data.ammo = math.max(0, data.ammo - (rounds or 1))
 
     if data.ammo == 0 then PSE.Reload.start(actor, data) end
 end
@@ -87,6 +87,26 @@ Callback.add(shell_state.on_step, function(actor, _)
     data.last_shell_frame = frame
     if frame == 2 or frame == 6 then M.spend(actor, data) end
 end)
+
+local watched = {}
+
+function M.watch_enter(entry)
+    for state_id in pairs(entry.states) do
+        if not watched[state_id] then
+            watched[state_id] = true
+            Callback.add(ActorState.wrap(state_id).on_enter, function(actor, _)
+                if not Util.bool(actor.is_local) then return end
+                local data = M.get(actor)
+                if not data or data.entry.shot ~= "enter" or not data.entry.states[state_id] then return end
+                M.spend(actor, data)
+            end)
+        end
+    end
+end
+
+for _, entry in pairs(Roster.by_skill) do
+    if entry.shot == "enter" then M.watch_enter(entry) end
+end
 
 Callback.add(Callback.ON_PLAYER_STEP, function(player)
     if not Util.bool(player.is_local) then return end
